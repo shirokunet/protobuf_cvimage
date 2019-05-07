@@ -1,0 +1,14 @@
+syntax = "proto3";
+
+package video;
+
+message Image {
+    uint32 width = 1;
+    uint32 height = 2;
+    uint32 channel = 3;
+    bytes data = 4;
+}
+
+message Video {
+  repeated Image image = 1;
+}
