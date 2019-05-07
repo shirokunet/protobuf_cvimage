@@ -8,3 +8,5 @@ __pycache__/
 */__pycache__/*
 proto/IMAGE_STORE_FILE
 proto/VIDEO_STORE_FILE
+data/test_image_d.jpg
+data/test_video_d.mp4
