@@ -1,0 +1,13 @@
+syntax = "proto3";
+
+package image;
+
+message Image {
+    uint32 msg_id = 1;
+    uint64 millis = 2;
+
+    uint32 width = 3;
+    uint32 height = 4;
+    uint32 channel = 5;
+    bytes data = 6;
+}
