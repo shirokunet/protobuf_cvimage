@@ -8,7 +8,7 @@ import time
 import zmq
 
 
-input_video_path = 'data/test_video.mp4'
+input_video_path = '../data/test_video.mp4'
 cap = cv2.VideoCapture(input_video_path)
 if not cap.isOpened():
     sys.exit()

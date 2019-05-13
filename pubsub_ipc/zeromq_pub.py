@@ -7,10 +7,8 @@ import sys
 import time
 import zmq
 
-from proto import image_zmq_pb2
 
-
-input_video_path = 'data/test_video.mp4'
+input_video_path = '../data/test_video.mp4'
 cap = cv2.VideoCapture(input_video_path)
 if not cap.isOpened():
     sys.exit()
@@ -36,18 +34,17 @@ print("Starting Socket")
 context = zmq.Context()
 s = context.socket(zmq.PUB)
 
-s.bind("tcp://*:{}".format(port))   # publish on local
+# s.bind("tcp://*:{}".format(port))   # publish on local
+s.bind("ipc:///tmp/{}".format(port))
 
 print("Creating message")
-
-msg_out = image_zmq_pb2.Image()
 
 print("All ready, starting to spam:\n")
 
 # wait for subscribers
 time.sleep(1)
 
-cost_time = []
+cost_time_mean = []
 while True:
     ret, img = cap.read()
     if not ret:
@@ -55,28 +52,31 @@ while True:
 
     start_t = time.time()
 
-    msg_out.msg_id += 1
-    msg_out.millis = int(time.time() * 1000 * 1000)
-    msg_out.height = img.shape[0]
-    msg_out.width = img.shape[1]
-    msg_out.channel = img.shape[2]
-    msg_out.data = np.ndarray.tobytes(img)
-    msg = msg_out.SerializeToString()
+    height, width = img.shape[:2]
+    ndim = img.ndim
+    msg = [topic.encode('utf-8'), 
+           np.array([int(time.time() * 1000 * 1000)]), \
+           np.array([height]), \
+           np.array([width]), \
+           np.array([ndim]), \
+           img.data]
 
     serialize_cost_t = time.time() - start_t
     print('serialize_cost_t', serialize_cost_t)
-    cost_time.append(serialize_cost_t)
+    cost_time_mean.append(serialize_cost_t)
 
-    s.send_multipart((topic.encode('utf-8'), msg))
+    s.send_multipart(msg)
 
     time.sleep(t_sleep_ms/1000)
 
-msg_out.msg_id = 0
-msg_out.millis = 0
+msg = [topic.encode('utf-8'), \
+       np.array([0]), \
+       np.array([0]), \
+       np.array([0]), \
+       np.array([0]), \
+       np.array([0])]
+s.send_multipart(msg)
 
-msg = msg_out.SerializeToString()   # bytes
-s.send_multipart((topic.encode('utf-8'), msg))
-
-print('\naverage serialize cost time [sec]:', format(np.mean(cost_time), '.3f'))
+print('\naverage serialize cost time [sec]:', format(np.mean(cost_time_mean), '.3f'))
 
 print("Done.\n")
